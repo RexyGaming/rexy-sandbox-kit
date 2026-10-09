@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "levelId": "PL_Street",
+  "displayName": "Street — Walkers & Car",
+  "description": "Three mannequins and a car, 20 s: one crosses and comes back, one stops centre frame and looks at camera, one crosses at the back, and a car passes at ~15 s. Practice follows, pans and timing a move to a moment.",
+  "levelAsset": "/Game/PracticeLevels/PL_Street/PL_Street",
+  "launch": {
+    "mapArgument": "/Game/PracticeLevels/PL_Street/PL_Street",
+    "commandLineFlags": [
+      "-RCWebControlEnable"
+    ],
+    "preLaunchRequirements": []
+  },
+  "controlPath": "remoteControl",
+  "remoteControl": {
+    "presetAssetPath": "/Game/PracticeLevels/PL_Street/PL_Street_RC",
+    "presetName": "PL_Street_RC",
+    "httpPort": 30010,
+    "webSocketPort": 30020
+  },
+  "action": {
+    "sequenceAsset": "/Game/PracticeLevels/PL_Street/LS_Action",
+    "actorTag": "RexyAction",
+    "fps": 30,
+    "lengthFrames": 600,
+    "loop": true,
+    "note": "Plays to the end and jumps back to the start (no seamless loop) — Bridge's loop button decides whether it repeats."
+  },
+  "gamepadInput": {
+    "supported": false
+  },
+  "rigs": [
+    {
+      "name": "Crane Cam",
+      "type": "crane",
+      "placement": "fixed"
+    },
+    {
+      "name": "Free Cam",
+      "type": "CineCameraActor",
+      "placement": "fixed"
+    }
+  ]
+}

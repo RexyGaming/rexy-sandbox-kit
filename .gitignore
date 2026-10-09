@@ -1,0 +1,6 @@
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+__pycache__/
+*.zip

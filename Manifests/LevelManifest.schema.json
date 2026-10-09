@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rexy.internal/schemas/LevelManifest-1.0.json",
+  "title": "Rexy Practice Level Manifest",
+  "description": "Machine-readable contract a packaged Rexy practice level ships alongside itself, so Bridge can launch it and know what's controllable without level-specific code. See Docs/LevelManifest_Schema.md for the narrative version of this spec.",
+  "type": "object",
+  "required": ["schemaVersion", "levelId", "displayName", "levelAsset", "launch", "controlPath"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Version of this manifest schema. Bump on any breaking field change; Bridge should refuse to parse a majorversion it doesn't recognize rather than guess."
+    },
+    "levelId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "description": "Stable unique identifier for this level, independent of display name. Used as Bridge's internal key (save data, library entries). Never change once shipped."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable name shown in Bridge's scene browser."
+    },
+    "description": {
+      "type": "string",
+      "description": "Short human-readable summary of what the scene is/does."
+    },
+    "levelAsset": {
+      "type": "string",
+      "description": "The UE package path to the level asset (e.g. /Game/PracticeLevels/PL_MinimalProof/PL_MinimalProof). Informational for creators/tooling; not needed by Bridge at runtime beyond the launch.mapArgument below, which is usually the same string."
+    },
+    "launch": {
+      "type": "object",
+      "description": "Everything Bridge needs to start the packaged executable correctly.",
+      "required": ["mapArgument", "commandLineFlags"],
+      "properties": {
+        "mapArgument": {
+          "type": "string",
+          "description": "Bare command-line argument identifying which map to load, e.g. /Game/PracticeLevels/PL_MinimalProof/PL_MinimalProof. Required because a Bridge-hosted build may ship multiple levels behind one executable and none of them should rely on being the project default map."
+        },
+        "commandLineFlags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Additional flags Bridge must always pass, e.g. [\"-RCWebControlEnable\"] for a remoteControl-path level. Empty array is valid (e.g. a future virtualController-only level needs none)."
+        },
+        "preLaunchRequirements": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["virtualControllersAttached"] },
+          "description": "Conditions Bridge must satisfy BEFORE starting the process, because the engine only detects them at startup. Currently only relevant to controlPath=virtualController: RawInput has no hot-plug detection (see BridgeVirtualController_Spec.md §2 Finding A), so any virtual controllers this level expects must already be attached to the OS before the executable launches."
+        }
+      }
+    },
+    "controlPath": {
+      "type": "string",
+      "enum": ["remoteControl", "virtualController", "none"],
+      "description": "Which mechanism Bridge uses to drive this level. 'remoteControl' is the current default (proven, see project_pl_minimalproof_complete memory). 'virtualController' is the target architecture, deprioritized pending BridgeVirtualController_Spec.md §2 Finding B. 'none' is valid for a level with no Bridge-driven control (e.g. gamepad-only)."
+    },
+    "remoteControl": {
+      "type": "object",
+      "description": "Required when controlPath=remoteControl. Describes the RC preset and what it exposes.",
+      "required": ["presetAssetPath", "presetName", "httpPort", "webSocketPort", "exposedProperties"],
+      "properties": {
+        "presetAssetPath": { "type": "string", "description": "UE package path to the RemoteControlPreset asset." },
+        "presetName": { "type": "string", "description": "The preset's Name field, used in the RC HTTP URL: /remote/preset/{presetName}." },
+        "httpPort": { "type": "integer", "default": 30010 },
+        "webSocketPort": { "type": "integer", "default": 30020 },
+        "exposedProperties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "rigName", "propertyPath", "type"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The RC exposed-property ID (from GET /remote/preset/{name}), used in PUT /remote/preset/{name}/property/{id}. Fetch fresh from the running instance rather than hardcoding — IDs are assigned when a property is exposed and are stable per-asset but opaque; don't guess them."
+              },
+              "label": { "type": "string", "description": "Human-readable label for a Bridge mapping UI, e.g. \"DollyCamera Location\"." },
+              "rigName": { "type": "string", "description": "Which entry in this manifest's top-level rigs[] this property belongs to." },
+              "propertyPath": { "type": "string", "description": "The underlying UE property name, e.g. RelativeLocation. Informational — Bridge should drive by id, not reconstruct this path." },
+              "type": { "type": "string", "enum": ["Vector", "Rotator", "Float", "Double", "Integer", "Boolean", "String", "Color"], "description": "Shape of the value PUT expects, matching RC's own type names." }
+            }
+          }
+        }
+      }
+    },
+    "virtualController": {
+      "type": "object",
+      "description": "Required when controlPath=virtualController. NOT YET LOAD-BEARING — see BridgeVirtualController_Spec.md §2 Finding B (RawInput did not reliably deliver analog values end-to-end in testing). Structure reflects the target design from §4/§7a of that spec; do not build against this until that finding is resolved.",
+      "required": ["controllerCount", "channelsPerController", "axisMap"],
+      "properties": {
+        "controllerCount": { "type": "integer", "minimum": 1, "description": "How many virtual DS4-shaped devices this level expects Bridge to attach before launch." },
+        "channelsPerController": {
+          "type": "object",
+          "properties": {
+            "axes": { "type": "integer", "default": 8 },
+            "buttons": { "type": "integer", "default": 12 }
+          },
+          "description": "Per-controller channel budget. Defaults match RawInput's own ceiling per BridgeVirtualController_Spec.md §4 — a level needing more channels requests more controllers, not a bigger single device."
+        },
+        "vendorId": { "type": "string", "default": "0x1209", "description": "Fixed VID Bridge should use for all controllers it creates for this level (pid.codes hobbyist allocation)." },
+        "axisMap": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["controllerIndex", "axisIndex", "rigName", "meaning"],
+            "properties": {
+              "controllerIndex": { "type": "integer", "minimum": 0, "description": "Which controller (0-based, PID = vendorId base + this index + 1)." },
+              "axisIndex": { "type": "integer", "minimum": 0 },
+              "rigName": { "type": "string" },
+              "meaning": { "type": "string", "description": "e.g. \"dolly forward/back\", \"crane pitch\"." }
+            }
+          }
+        }
+      }
+    },
+    "gamepadInput": {
+      "type": "object",
+      "description": "Independent, lower-priority path: real physical gamepad support for users without Bridge. See feedback_rc_first_rawinput_later memory — explicitly NOT unified with the virtualController path above.",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean" },
+        "note": { "type": "string" }
+      }
+    },
+    "rigs": {
+      "type": "array",
+      "description": "Equipment available in the scene, referenced by name from exposedProperties/axisMap above.",
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "placement"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string", "description": "e.g. CineCameraActor, dolly, crane, drone." },
+          "placement": { "type": "string", "enum": ["fixed", "markBased", "freePlacement"], "description": "fixed = single pre-placed position (current default, see RexyFilmAcademy_ConceptSpec.md §5.1a). markBased/freePlacement are future phases." }
+        }
+      }
+    }
+  }
+}

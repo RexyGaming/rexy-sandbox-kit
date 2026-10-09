@@ -1,0 +1,18 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "4",
+	"FriendlyName": "Rexy Sandbox",
+	"Description": "Runtime support for Rexy practice levels driven by Rexy Bridge: blocking viewport, camera monitor windows, rig models, crane smoothing, the in-game action transport, and look / performance controls (motion blur, frame lock, monitor resolution, fast lighting).",
+	"Category": "Rexy",
+	"CreatedBy": "Rexy Gaming",
+	"EnabledByDefault": true,
+	"CanContainContent": false,
+	"Modules": [
+		{
+			"Name": "RexySandbox",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

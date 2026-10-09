@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "levelId": "PL_Template",
+  "displayName": "Practice Template",
+  "description": "Standard Rexy practice-level template: one crane with its camera, one free camera, and a 20-second looping action (stand-in walkers and a vehicle). Duplicate it to start a new practice level.",
+  "levelAsset": "/Game/PracticeLevels/PL_Template/PL_Template",
+  "launch": {
+    "mapArgument": "/Game/PracticeLevels/PL_Template/PL_Template",
+    "commandLineFlags": ["-RCWebControlEnable"],
+    "preLaunchRequirements": []
+  },
+  "controlPath": "remoteControl",
+  "remoteControl": {
+    "presetAssetPath": "/Game/PracticeLevels/PL_Template/PL_Template_RC",
+    "presetName": "PL_Template_RC",
+    "httpPort": 30010,
+    "webSocketPort": 30020
+  },
+  "action": {
+    "sequenceAsset": "/Game/PracticeLevels/PL_Template/LS_Action",
+    "actorTag": "RexyAction",
+    "fps": 30,
+    "lengthFrames": 600,
+    "loop": true,
+    "note": "Bridge finds the LevelSequenceActor tagged RexyAction (exposed in the preset) and drives its SequencePlayer for the timeline."
+  },
+  "gamepadInput": {
+    "supported": false
+  },
+  "rigs": [
+    { "name": "Crane Cam", "type": "crane", "placement": "fixed" },
+    { "name": "Free Cam", "type": "CineCameraActor", "placement": "fixed" }
+  ]
+}
